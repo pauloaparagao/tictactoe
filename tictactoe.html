@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Tic tac toe</title>
+        <link href="https://fonts.googleapis.com/css?family=Antic+Slab" rel="stylesheet">
+    </head>
+    <body>
+        <canvas id="board" width="300" height="300"></canvas>
+        <style>
+            #board {
+                
+            }
+        </style>
+    </body>
+    <script>
+        
+        class TicTacToe {
+            constructor(id) {
+                this.canvas = document.getElementById(id);
+                this.context = this.canvas.getContext('2d');
+
+                //Create an empty squares array
+                this.squares = [];
+
+                //Get sizes
+                const w = this.canvas.width / 3;
+                const h = this.canvas.height /3;
+
+                //Create squares
+                for(let x = 0; x < 3; x++) {
+                    for (let y = 0; y < 3; y++) {
+                        this.squares.push(new Square(x * w, y * h, w, h, this.context));
+                    }
+                }
+
+                //Create the actors
+                this.actors = ["x", "o"];
+
+                //Define the current actor
+                this.turn = 0;
+
+                //Defines a check to see if the game is over
+                this.gameOver = false;
+
+                //Draw the board
+                this.squares.forEach(squares => squares.draw());
+
+                //Bind the click event
+
+                this.canvas.addEventListener('click', function(event) { this.click(event); }.bind(this));
+            }
+
+            click(event) {
+                // If the game has ended, reset the game.
+                if (this.gameOver) {
+                    this.reset();
+                    return;
+                }
+
+                // Get mouse position.
+                const x = event.offsetX;
+                const y = event.offsetY;
+                            
+                // Check if one of the squares was clicked.
+                for (let square of this.squares) {
+                    // Only allow empty squares to be clicked.
+                    if (square.actor != null) continue;
+                    // Check if the mouse is inside the square.
+                    if (x >= square.x && x <= square.x + square.width && y >= square.y && y <= square.y + square.height) {
+                    // Set actor
+                    square.actor = this.actors[this.turn];
+                    square.draw();
+
+                    // Switch turn.
+                    this.turn = (this.turn + 1) % this.actors.length;
+                    }
+                }
+                
+                // Check if the game should end.
+                this.checkForWinner();
+            }
+
+            checkForWinner() {
+                // Check if the game is over.
+                const winnerCombinations = [
+                    // Columns
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+                    // Rows
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8],  
+                    // Diagonals
+                    [0, 4, 8], [2, 4, 6]          
+                ];
+
+                // Check combinations
+                for (let i = 0; i < winnerCombinations.length; i++) {
+                    // Get combination
+                    let combination = winnerCombinations[i];
+
+                    // Get squares
+                    let s1 = this.squares[combination[0]];
+                    let s2 = this.squares[combination[1]];
+                    let s3 = this.squares[combination[2]];
+
+                    // Ensure the combination is not three empty squares.
+                    if (s1.actor != null) {
+                    // Check if the three squares has the same actor.
+                    if (s1.actor == s2.actor 
+                    && s1.actor == s3.actor) {
+                        // Set game over.
+                        this.gameOver = true;
+
+                        // Draw the combination line.
+                        this.context.beginPath();
+                        this.context.moveTo(s1.x + s1.width/2, s1.y + s1.height/2);
+                        this.context.lineTo(s3.x + s3.width/2, s3.y + s3.height/2);
+                        this.context.stroke();
+                                        
+                        // Draw winner text.
+                        this.context.fillStyle = 'red';
+                        this.context.font = '30px Arial';
+                        this.context.textAlign = "center";
+                        this.context.fillText(s1.actor  + " wins!", this.canvas.width / 2, this.canvas.height / 2);
+                    }
+                    }
+                }
+
+                // Check if the game is draw.
+                if (!this.gameOver && this.squares.filter(square => square.actor == null).length == 0) {
+                    this.gameOver = true;
+                    this.context.fillStyle = 'red';
+                    this.context.font = '30px Arial';
+                    this.context.textAlign = "center";
+                    this.context.fillText("Draw!", this.canvas.width / 2, this.canvas.height / 2);
+                }
+            }
+
+            reset() {
+                //Clear the canvas
+                this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                //Reset all actors
+                this.squares.forEach(squares => squares.actor = null);
+                
+                //Draw the board
+                this.squares.forEach(squares => squares.draw());
+                
+                //Reset turn
+                this.turn = 0;
+
+                //Reset game over
+                this.gameOver = false;
+            }
+        };
+
+        class Square {
+            constructor(x, y, width, height, context) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.context = context;
+                this.actor = null;
+            }
+
+            draw() {
+                //Draw the rect
+                this.context.strokeStyle = 'black';
+                this.context.strokeRect(this.x, this.y, this.width, this.height);
+
+                //Draw the actor if it is not null
+                if(this.actor) {
+                    this.context.fillStyle = 'black';
+                    this.context.font = '30px Arial';
+                    this.context.align = 'center';
+                    this.context.fillText(this.actor, this.x + this.width / 2 , this.y + this.height / 2 + 10);
+                }
+            }
+        };
+
+        new TicTacToe('board');
+    </script>
+</html>
